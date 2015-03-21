@@ -1,0 +1,29 @@
+{
+  "name": "sockception",
+  "version": "0.0.1",
+  "description": "Javascript socket wrapper which creates a subsocket off every message for weaving replies and conversations within a connection",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/voltrevo/sockception.git"
+  },
+  "keywords": [
+    "socket",
+    "websocket",
+    "publish",
+    "subscribe",
+    "request",
+    "response",
+    "communication",
+    "management"
+  ],
+  "author": "Andrew Morris",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/voltrevo/sockception/issues"
+  },
+  "homepage": "https://github.com/voltrevo/sockception"
+}
