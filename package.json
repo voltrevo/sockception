@@ -25,5 +25,8 @@
   "bugs": {
     "url": "https://github.com/voltrevo/sockception/issues"
   },
-  "homepage": "https://github.com/voltrevo/sockception"
+  "homepage": "https://github.com/voltrevo/sockception",
+  "dependencies": {
+    "ws": "^0.7.1"
+  }
 }
