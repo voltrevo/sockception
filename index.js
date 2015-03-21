@@ -34,18 +34,23 @@ sock.receive(function(sockMsg) {
 
 var ws = require("ws")
 
-var createIdGen = function(prefix) {
+var sockception = exports
+
+sockception.impl = {}
+var impl = sockception.impl
+
+impl.idGen = function(prefix) {
     var count = 0
     return function() {
         return prefix + count++
     }
 }
 
-exports.create = function(prefix, stringTransport) {
+sockception.fromPrefixAndTransport = function(prefix, transport) {
     var factory = {
         handlerMap: {},
-        idGen: createIdGen(prefix),
-        stringTransport: stringTransport,
+        idGen: impl.idGen(prefix),
+        stringTransport: transport,
         create: function(value, id) {
             var socket = {
                 factory: factory,
@@ -53,7 +58,7 @@ exports.create = function(prefix, stringTransport) {
                 id: id,
                 send: function(value) {
                     var subsocket = socket.factory.create(null, socket.factory.idGen())
-                    stringTransport.send(JSON.stringify([socket.id, subsocket.id, value]))
+                    transport.send(JSON.stringify([socket.id, subsocket.id, value]))
 
                     return subsocket
                 },
@@ -66,7 +71,7 @@ exports.create = function(prefix, stringTransport) {
         }
     }
 
-    stringTransport.receive(function(str) {
+    transport.receive(function(str) {
         var parsed = JSON.parse(str)
 
         var handler = factory.handlerMap[parsed[0]]
@@ -81,7 +86,48 @@ exports.create = function(prefix, stringTransport) {
     return factory.create(null, factory.idGen())
 }
 
-exports.listen = function(opt) {
+impl.transportPair = function() {
+    var handlers = {
+        a: function() {},
+        b: function() {}
+    }
+
+    var transports = {
+        a: {
+            send: function(msg) {
+                process.nextTick(function() {
+                    handlers.b(msg)
+                })
+            },
+            receive: function(handler) {
+                handlers.a = handler
+            }
+        },
+        b: {
+            send: function(msg) {
+                process.nextTick(function() {
+                    handlers.a(msg)
+                })
+            },
+            receive: function(handler) {
+                handlers.b = handler
+            }
+        }
+    }
+
+    return transports
+}
+
+sockception.pair = function() {
+    var pair = impl.transportPair()
+
+    return {
+        a: sockception.fromPrefixAndTransport("a", pair.a),
+        b: sockception.fromPrefixAndTransport("b", pair.b)
+    }
+}
+
+sockception.listen = function(opt) {
     var wss = new ws.Server({port: opt.port})
 
     var sockHandler = function() {}
@@ -93,7 +139,7 @@ exports.listen = function(opt) {
             handler(msg.data.toString())
         })
 
-        sockHandler(exports.create(
+        sockHandler(sockception.fromPrefixAndTransport(
             "s",
             {
                 send: function(s) { websock.send(s) },
@@ -108,7 +154,7 @@ exports.listen = function(opt) {
     }
 }
 
-exports.connect = function(address) {
+sockception.connect = function(address) {
     var websock = new ws(address)
 
     var handler = function() {}
@@ -117,7 +163,7 @@ exports.connect = function(address) {
         handler(msg)
     })
 
-    return exports.create(
+    return sockception.fromPrefixAndTransport(
         "c",
         {
             send: function(s) { websock.send(s) },

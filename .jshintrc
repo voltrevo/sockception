@@ -13,5 +13,6 @@
     "unused": true,
     "loopfunc": true,
     "maxstatements": 30,
-    "maxcomplexity": 8
+    "maxcomplexity": 8,
+    "predef": ["describe", "it"]
 }

@@ -4,7 +4,7 @@
   "description": "Javascript socket wrapper which creates a subsocket off every message for weaving replies and conversations within a connection",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test"
   },
   "repository": {
     "type": "git",
@@ -28,5 +28,8 @@
   "homepage": "https://github.com/voltrevo/sockception",
   "dependencies": {
     "ws": "^0.7.1"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.1"
   }
 }
