@@ -42,8 +42,6 @@ var sockception
     sockception.impl = {}
     var impl = sockception.impl
 
-    var clientWebsocket = (ws ? ws : WebSocket)
-
     impl.idGen = function(prefix) {
         var count = 0
         return function() {
@@ -149,7 +147,7 @@ var sockception
             var handler = function() {} // TODO: timeout queues?
 
             websock.on("message", function(msg) {
-                handler(msg.data.toString())
+                handler(msg.toString())
             })
 
             sockHandler(sockception.fromPrefixAndTransport(
@@ -167,21 +165,33 @@ var sockception
         }
     }
 
-    sockception.connect = function(address) {
-        var websock = new clientWebsocket(address)
+    impl.clientWebsocketTransport = (
+        ws ?
+        function(addr) {
+            var sock = new ws(addr)
+            var handler = function() {}
 
-        var handler = function() {}
-
-        websock.on("message", function(msg) {
-            handler(msg)
-        })
-
-        return sockception.fromPrefixAndTransport(
-            "c",
-            {
-                send: function(s) { websock.send(s) },
-                receive: function(cb) { handler = cb }
+            sock.on("message", function(msg) {
+                handler(msg.toString())
             })
+
+            return {
+                send: function(msg) { sock.send(msg) },
+                receive: function(cb) { handler = cb }
+            }
+        } :
+        function(addr) {
+            var sock = new WebSocket(addr)
+
+            return {
+                send: function(msg) { sock.send(msg) },
+                receive: function(cb) { sock.onmessage = function(msg) { cb(msg.data.toString()) } }
+            }
+        }
+    )
+
+    sockception.connect = function(address) {
+        return sockception.fromPrefixAndTransport("c", impl.clientWebsocketTransport(address))
     }
 })(
     typeof module === "undefined" ? {exports: {}} : module,
