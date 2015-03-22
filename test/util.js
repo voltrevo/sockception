@@ -4,6 +4,8 @@ var assert = require("assert")
 
 var sockception = require("..")
 var router = sockception.util.router
+var chain = sockception.util.chain
+var once = sockception.util.once
 
 describe("router", function(){
     it("should do nothing when nothing is specified", function() {
@@ -87,20 +89,18 @@ describe("router", function(){
         var fooSum = 0
         var barSum = 0
 
-        pair.b.receive(router()
-            .transform(function(value) {
-                return value.route
-            })
-            .route("foo", function(s) {
-                fooSum += s.value.content
-                s.send("ack")
-            })
-            .route("bar", function(s) {
-                barSum += s.value.content
-                s.send("ack")
-            })
-            .default()
-        )
+        pair.b.receive(chain()
+            .push(router()
+                .transform(function(value) {
+                    return value.route
+                })
+                .route("foo", function(s) {
+                    fooSum += s.value.content
+                })
+                .route("bar", function(s) {
+                    barSum += s.value.content
+                }))
+            .push(sockception.util.acker))
 
         pair.a.send({route: "foo", content: 5})
         pair.a.send({route: "bar", content: 7})
@@ -108,6 +108,63 @@ describe("router", function(){
         pair.a.send({route: "bar", content: 1}).receive(function() {
             assert.equal(fooSum, 6)
             assert.equal(barSum, 8)
+            done()
+        })
+    })
+})
+
+describe("chain", function() {
+    it("should happily do nothing when empty", function(done) {
+        var pair = sockception.pair()
+
+        pair.b.receive(chain())
+        pair.a.send("wollolo")
+
+        process.nextTick(done)
+    })
+
+    it("should call handlers in order", function(done) {
+        var pair = sockception.pair()
+
+        var tag = ""
+
+        pair.b.receive(chain()
+            .push(function() {
+                assert.equal(tag, "")
+                tag = "foo"
+            })
+            .push(function() {
+                assert.equal(tag, "foo")
+                tag = "bar"
+            })
+            .push(function() {
+                assert.equal(tag, "bar") // TODO: does this actually get tested?
+                tag = ""
+            }))
+
+        pair.a.send("I'm ignored")
+        pair.a.send("Me too")
+        pair.a.send("Quit complaining, it's not relevant to the test")
+
+        process.nextTick(done)
+    })
+})
+
+describe("once", function() {
+    it("should only call handler once, then ignore", function(done) {
+        var pair = sockception.pair()
+
+        var count = 0
+
+        pair.b.receive(once(function() {
+            count++
+        }))
+
+        pair.a.send("one")
+        pair.a.send("two")
+
+        process.nextTick(function() {
+            assert.equal(count, 1)
             done()
         })
     })
