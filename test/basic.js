@@ -114,21 +114,124 @@ describe("sockception", function() {
             })
         })
     })
-    
-    /*describe("createInternal", function() {
-        it("should send and receive a basic message correctly", function(done) {
-            var pair = sockception.createInternalPair()
 
-            pair.a.send("hello")
+    describe("fromPrefixAndTransport", function() {
+        var fixture = function() {
+            var transports = sockception.impl.transportPair()
+            return {
+                sock: sockception.fromPrefixAndTransport("test", transports.a),
+                dst: transports.b
+            }
+        }
 
-            pair.b.receive(function(sock) {
-                assert.equal(sock.value, "hello")
+        it("should have a value of null", function() {
+            assert.equal(fixture().sock.value, null)
+        })
+
+        it("should have an impl.id of 0", function() {
+            assert.equal(fixture().sock.impl.id, "0")
+        })
+
+        it("should have a generator that produces the expected ids", function() {
+            var fx = fixture()
+            assert.equal(fx.sock.impl.factory.idGen(), "test0")
+            assert.equal(fx.sock.impl.factory.idGen(), "test1")
+            assert.equal(fx.sock.impl.factory.idGen(), "test2")
+            assert.equal(fx.sock.impl.factory.idGen(), "test3")
+        })
+
+        it("should send a message in the expected format", function(done) {
+            var fx = fixture()
+
+            fx.sock.send("Hello")
+
+            fx.dst.receive(function(str) {
+                assert.equal(str, JSON.stringify(["0", "test0", "Hello"]))
                 done()
             })
         })
-    })*/
+    })
 
-    /*describe("listen, connect", function() {
+    describe("pair", function() {
+        it("should send and receive a basic message correctly", function(done) {
+            var pair = sockception.pair()
+
+            pair.a.send("Hello world!")
+
+            pair.b.receive(function(sock) {
+                assert.equal(sock.value, "Hello world!")
+                done()
+            })
+        })
+
+        it("should send and receive json correctly", function(done) {
+            var pair = sockception.pair()
+
+            var messages = [
+                {},
+                {foo: "bar"},
+                [1, 2, 3],
+                [1, 2, 3, "four", {value: "five"}]
+            ]
+
+            messages.forEach(function(msg) {
+                pair.a.send(msg)
+            })
+
+            var count = 0
+            pair.b.receive(function(s) {
+                assert.deepEqual(s.value, messages[count])
+                count++
+
+                if (count === messages.length) {
+                    done()
+                }
+            })
+        })
+
+        it("should satisfy a chat echo pattern", function(done) {
+            var pair = sockception.pair()
+
+            // a/server side:
+            ;(function() {
+                var chat = pair.a.send("chat")
+
+                chat.receive(function(s) {
+                    chat.send(s.value)
+                })
+            })()
+
+            // b/client side:
+            ;(function() {
+                pair.b.receive(function(chat) {
+                    assert.equal(chat.value, "chat")
+
+                    var messages = [
+                        "Hello world!",
+                        "foo",
+                        "bar",
+                        "foobar"
+                    ]
+
+                    messages.forEach(function(msg) {
+                        chat.send(msg)
+                    })
+
+                    var count = 0
+                    chat.receive(function(s) {
+                        assert.equal(s.value, messages[count])
+                        count++
+
+                        if (count === messages.length) {
+                            done()
+                        }
+                    })
+                })
+            })()
+        })
+    })
+
+    describe("listen, connect", function() {
         it("should send and receive a basic message correctly", function(done) {
             var server = sockception.listen({port: 15319})
 
@@ -143,5 +246,5 @@ describe("sockception", function() {
                 done()
             })
         })
-    })*/
+    })
 })

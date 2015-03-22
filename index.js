@@ -50,20 +50,24 @@ sockception.fromPrefixAndTransport = function(prefix, transport) {
     var factory = {
         handlerMap: {},
         idGen: impl.idGen(prefix),
-        stringTransport: transport,
-        create: function(value, id) {
+        transport: transport,
+        create: function(id, value) {
             var socket = {
-                factory: factory,
+                impl: {
+                    factory: factory,
+                    id: id
+                },
                 value: value,
-                id: id,
                 send: function(value) {
-                    var subsocket = socket.factory.create(null, socket.factory.idGen())
-                    transport.send(JSON.stringify([socket.id, subsocket.id, value]))
+                    var impl = socket.impl
+                    var factory = impl.factory
+                    var subsocket = factory.create(factory.idGen(), null)
+                    factory.transport.send(JSON.stringify([impl.id, subsocket.impl.id, value]))
 
                     return subsocket
                 },
                 receive: function(cb) {
-                    socket.factory.handlerMap[socket.id] = cb
+                    socket.impl.factory.handlerMap[socket.impl.id] = cb
                 }
             }
 
@@ -80,10 +84,10 @@ sockception.fromPrefixAndTransport = function(prefix, transport) {
             return
         }
 
-        handler(factory.create(parsed[2], parsed[1]))
+        handler(factory.create(parsed[1], parsed[2]))
     })
 
-    return factory.create(null, factory.idGen())
+    return factory.create("0", null)
 }
 
 impl.transportPair = function() {
