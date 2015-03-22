@@ -2,7 +2,7 @@
 
 var assert = require("assert")
 
-var sockception = require("../index")
+var sockception = require("..")
 
 var callSequence = function() {
     var i = 0

@@ -2,7 +2,7 @@
   "name": "sockception",
   "version": "0.0.2",
   "description": "Javascript socket wrapper which creates a subsocket off every message for weaving replies and conversations within a connection",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "mocha test"
   },
