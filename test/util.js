@@ -80,4 +80,35 @@ describe("router", function(){
             })
         })
     })
+
+    it("should call transformed route", function(done) {
+        var pair = sockception.pair()
+
+        var fooSum = 0
+        var barSum = 0
+
+        pair.b.receive(router()
+            .transform(function(value) {
+                return value.route
+            })
+            .route("foo", function(s) {
+                fooSum += s.value.content
+                s.send("ack")
+            })
+            .route("bar", function(s) {
+                barSum += s.value.content
+                s.send("ack")
+            })
+            .default()
+        )
+
+        pair.a.send({route: "foo", content: 5})
+        pair.a.send({route: "bar", content: 7})
+        pair.a.send({route: "foo", content: 1})
+        pair.a.send({route: "bar", content: 1}).receive(function() {
+            assert.equal(fooSum, 6)
+            assert.equal(barSum, 8)
+            done()
+        })
+    })
 })
