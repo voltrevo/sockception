@@ -128,8 +128,8 @@ describe("sockception", function() {
             assert.equal(fixture().sock.value, null)
         })
 
-        it("should have an impl.id of 0", function() {
-            assert.equal(fixture().sock.impl.id, "0")
+        it("should have an impl.route of [\"0\"]", function() {
+            assert.deepEqual(fixture().sock.impl.route, ["0"])
         })
 
         it("should have a generator that produces the expected ids", function() {
@@ -146,7 +146,7 @@ describe("sockception", function() {
             fx.sock.send("Hello")
 
             fx.dst.receive(function(str) {
-                assert.equal(str, JSON.stringify(["0", "test0", "Hello"]))
+                assert.equal(str, JSON.stringify([["0"], ["test0"], "Hello"]))
                 done()
             })
         })
