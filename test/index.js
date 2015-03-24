@@ -113,6 +113,60 @@ describe("sockception", function() {
                 pair.a.send("world")
             })
         })
+
+        describe("mapRoute", function() {
+            it("should lazily create routes", function() {
+                var routes = {
+                    sub: {}
+                }
+
+                var foo = sockception.impl.mapRoute(routes, ["foo"])
+                
+                assert.deepEqual(routes, {
+                    sub: {
+                        foo: {
+                            sub: {}
+                        }
+                    }
+                })
+
+                assert.strictEqual(foo, routes.sub.foo)
+
+                var bar = sockception.impl.mapRoute(routes, ["bar"])
+
+                assert.deepEqual(routes, {
+                    sub: {
+                        foo: {
+                            sub: {}
+                        },
+                        bar: {
+                            sub: {}
+                        }
+                    }
+                })
+
+                assert.strictEqual(bar, routes.sub.bar)
+
+                var foobar = sockception.impl.mapRoute(routes, ["foo", "bar"])
+
+                assert.deepEqual(routes, {
+                    sub: {
+                        foo: {
+                            sub: {
+                                bar: {
+                                    sub: {}
+                                }
+                            }
+                        },
+                        bar: {
+                            sub: {}
+                        }
+                    }
+                })
+
+                assert.strictEqual(foobar, routes.sub.foo.sub.bar)
+            })
+        })
     })
 
     describe("fromPrefixAndTransport", function() {
