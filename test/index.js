@@ -117,54 +117,55 @@ describe("sockception", function() {
         describe("mapRoute", function() {
             it("should lazily create routes", function() {
                 var routes = {
-                    sub: {}
+                    children: {}
                 }
 
                 var foo = sockception.impl.mapRoute(routes, ["foo"])
                 
                 assert.deepEqual(routes, {
-                    sub: {
+                    children: {
                         foo: {
-                            sub: {}
+                            children: {},
+                            data: {}
                         }
                     }
                 })
 
-                assert.strictEqual(foo, routes.sub.foo)
+                assert.strictEqual(foo, routes.children.foo)
 
                 var bar = sockception.impl.mapRoute(routes, ["bar"])
 
                 assert.deepEqual(routes, {
-                    sub: {
+                    children: {
                         foo: {
-                            sub: {}
+                            children: {}
                         },
                         bar: {
-                            sub: {}
+                            children: {}
                         }
                     }
                 })
 
-                assert.strictEqual(bar, routes.sub.bar)
+                assert.strictEqual(bar, routes.children.bar)
 
                 var foobar = sockception.impl.mapRoute(routes, ["foo", "bar"])
 
                 assert.deepEqual(routes, {
-                    sub: {
+                    children: {
                         foo: {
-                            sub: {
+                            children: {
                                 bar: {
-                                    sub: {}
+                                    children: {}
                                 }
                             }
                         },
                         bar: {
-                            sub: {}
+                            children: {}
                         }
                     }
                 })
 
-                assert.strictEqual(foobar, routes.sub.foo.sub.bar)
+                assert.strictEqual(foobar, routes.children.foo.children.bar)
             })
         })
     })
