@@ -114,58 +114,63 @@ describe("sockception", function() {
             })
         })
 
-        describe("mapRoute", function() {
+        describe("initRoute", function() { // TODO: getRoute
             it("should lazily create routes", function() {
                 var routes = {
                     children: {}
                 }
 
-                var foo = sockception.impl.mapRoute(routes, ["foo"])
+                var foo = sockception.impl.initRoute(routes, ["foo"])
                 
                 assert.deepEqual(routes, {
                     children: {
                         foo: {
                             children: {},
-                            data: {}
+                            value: {}
                         }
                     }
                 })
 
-                assert.strictEqual(foo, routes.children.foo)
+                assert.strictEqual(foo, routes.children.foo.value)
 
-                var bar = sockception.impl.mapRoute(routes, ["bar"])
+                var bar = sockception.impl.initRoute(routes, ["bar"])
 
                 assert.deepEqual(routes, {
                     children: {
                         foo: {
-                            children: {}
+                            children: {},
+                            value: {}
                         },
                         bar: {
-                            children: {}
+                            children: {},
+                            value: {}
                         }
                     }
                 })
 
-                assert.strictEqual(bar, routes.children.bar)
+                assert.strictEqual(bar, routes.children.bar.value)
 
-                var foobar = sockception.impl.mapRoute(routes, ["foo", "bar"])
+                var foobar = sockception.impl.initRoute(routes, ["foo", "bar"])
 
                 assert.deepEqual(routes, {
                     children: {
                         foo: {
                             children: {
                                 bar: {
-                                    children: {}
+                                    children: {},
+                                    value: {}
                                 }
-                            }
+                            },
+                            value: {}
                         },
                         bar: {
-                            children: {}
+                            children: {},
+                            value: {}
                         }
                     }
                 })
 
-                assert.strictEqual(foobar, routes.children.foo.children.bar)
+                assert.strictEqual(foobar, routes.children.foo.children.bar.value)
             })
         })
     })
@@ -184,7 +189,7 @@ describe("sockception", function() {
         })
 
         it("should have an impl.route of [\"0\"]", function() {
-            assert.deepEqual(fixture().sock.impl.route, ["0"])
+            assert.deepEqual(fixture().sock.impl.routePath, ["0"])
         })
 
         it("should have a generator that produces the expected ids", function() {
@@ -283,6 +288,22 @@ describe("sockception", function() {
                     })
                 })
             })()
+        })
+
+        it("should support long reply chains", function(done) {
+            var pair = sockception.pair()
+            var len = 100
+
+            var handler = function(s) {
+                if (s.value === len) {
+                    done()
+                } else {
+                    s.send(s.value + 1).receive(handler)
+                }
+            }
+
+            pair.a.receive(handler)
+            pair.b.send(1).receive(handler)
         })
     })
 
