@@ -11,7 +11,7 @@ describe("router", function(){
     it("should do nothing when nothing is specified", function() {
         var pair = sockception.pair()
 
-        pair.b.receive(router().receiver)
+        pair.b.receiveOne(router().receiver)
 
         pair.a.send("Hello abyss")
     })
@@ -19,7 +19,7 @@ describe("router", function(){
     it("should call default if specified", function(done) {
         var pair = sockception.pair()
 
-        pair.b.receive(router()
+        pair.b.receiveOne(router()
             .default(function() { done() })
         )
 
@@ -31,7 +31,7 @@ describe("router", function(){
 
         var flags = {}
 
-        pair.b.receive(router()
+        pair.b.receiveMany(router()
             .route("foo", function() { flags.foo = true })
             .route("bar", function() { flags.bar = true })
             .route("finish", function() {
@@ -64,15 +64,15 @@ describe("router", function(){
                 s.send("ack")
             })
 
-        pair.b.receive(r)
+        pair.b.receiveMany(r)
 
-        pair.a.send("foo").receive(function(s) {
+        pair.a.send("foo").receiveOne(function(s) {
             assert.equal(s.value, "ack")
 
             assert.equal(fooCount, 1)
             assert.equal(defaultCount, 0)
 
-            pair.a.send("foo").receive(function(s) {
+            pair.a.send("foo").receiveOne(function(s) {
                 assert.equal(s.value, "ack")
 
                 assert.equal(fooCount, 1)
@@ -89,7 +89,7 @@ describe("router", function(){
         var fooSum = 0
         var barSum = 0
 
-        pair.b.receive(chain()
+        pair.b.receiveMany(chain()
             .push(router()
                 .transform(function(value) {
                     return value.route
@@ -105,7 +105,7 @@ describe("router", function(){
         pair.a.send({route: "foo", content: 5})
         pair.a.send({route: "bar", content: 7})
         pair.a.send({route: "foo", content: 1})
-        pair.a.send({route: "bar", content: 1}).receive(function() {
+        pair.a.send({route: "bar", content: 1}).receiveOne(function() {
             assert.equal(fooSum, 6)
             assert.equal(barSum, 8)
             done()
@@ -117,7 +117,7 @@ describe("chain", function() {
     it("should happily do nothing when empty", function(done) {
         var pair = sockception.pair()
 
-        pair.b.receive(chain())
+        pair.b.receiveOne(chain())
         pair.a.send("wollolo")
 
         process.nextTick(done)
@@ -128,7 +128,7 @@ describe("chain", function() {
 
         var tag = ""
 
-        pair.b.receive(chain()
+        pair.b.receiveMany(chain()
             .push(function() {
                 assert.equal(tag, "")
                 tag = "foo"
@@ -156,7 +156,7 @@ describe("once", function() {
 
         var count = 0
 
-        pair.b.receive(once(function() {
+        pair.b.receiveMany(once(function() {
             count++
         }))
 

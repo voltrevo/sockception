@@ -218,7 +218,7 @@ describe("sockception", function() {
 
             pair.a.send("Hello world!")
 
-            pair.b.receive(function(sock) {
+            pair.b.receiveOne(function(sock) {
                 assert.equal(sock.value, "Hello world!")
                 done()
             })
@@ -239,13 +239,52 @@ describe("sockception", function() {
             })
 
             var count = 0
-            pair.b.receive(function(s) {
+            pair.b.receiveMany(function(s, stop) {
                 assert.deepEqual(s.value, messages[count])
                 count++
 
                 if (count === messages.length) {
+                    stop()
                     done()
                 }
+            })
+        })
+
+        it("should ignore after first message with receiveOne", function(done) {
+            var pair = sockception.pair()
+
+            var count = 0
+            pair.b.receiveOne(function() {
+                count++
+            })
+
+            pair.a.send()
+            pair.a.send()
+
+            process.nextTick(function() {
+                assert.equal(count, 1)
+                done()
+            })
+        })
+
+        it("should ignore extra messages when stop is called with receiveMany", function(done) {
+            var pair = sockception.pair()
+
+            var count = 0
+            pair.b.receiveMany(function(s, stop) {
+                count++
+                if (count === 2) {
+                    stop()
+                }
+            })
+
+            pair.a.send()
+            pair.a.send()
+            pair.a.send()
+
+            process.nextTick(function() {
+                assert.equal(count, 2)
+                done()
             })
         })
 
@@ -256,14 +295,14 @@ describe("sockception", function() {
             ;(function() {
                 var chat = pair.a.send("chat")
 
-                chat.receive(function(s) {
+                chat.receiveMany(function(s) {
                     chat.send(s.value)
                 })
             })()
 
             // b/client side:
             ;(function() {
-                pair.b.receive(function(chat) {
+                pair.b.receiveOne(function(chat) {
                     assert.equal(chat.value, "chat")
 
                     var messages = [
@@ -278,11 +317,12 @@ describe("sockception", function() {
                     })
 
                     var count = 0
-                    chat.receive(function(s) {
+                    chat.receiveMany(function(s, stop) {
                         assert.equal(s.value, messages[count])
                         count++
 
                         if (count === messages.length) {
+                            stop()
                             done()
                         }
                     })
@@ -298,12 +338,12 @@ describe("sockception", function() {
                 if (s.value === len) {
                     done()
                 } else {
-                    s.send(s.value + 1).receive(handler)
+                    s.send(s.value + 1).receiveOne(handler)
                 }
             }
 
-            pair.a.receive(handler)
-            pair.b.send(1).receive(handler)
+            pair.a.receiveOne(handler)
+            pair.b.send(1).receiveOne(handler)
         })
     })
 
@@ -311,13 +351,13 @@ describe("sockception", function() {
         it("should send and receive a basic message correctly", function(done) {
             var server = sockception.listen({port: 15319})
 
-            server.receive(function(sock) {
+            server.receiveMany(function(sock) {
                 sock.send("hello")
             })
 
             var client = sockception.connect("ws://localhost:15319/")
 
-            client.receive(function(sock) {
+            client.receiveOne(function(sock) {
                 assert.equal(sock.value, "hello")
                 done()
             })
