@@ -1,6 +1,6 @@
 {
   "name": "sockception",
-  "version": "0.0.3",
+  "version": "0.0.8",
   "description": "Javascript socket wrapper which creates a subsocket off every message for weaving replies and conversations within a connection",
   "main": "lib/index.js",
   "scripts": {
@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/voltrevo/sockception",
   "dependencies": {
-    "ws": "^0.7.1"
+    "ws": "^0.8.0"
   },
   "devDependencies": {
     "mocha": "^2.2.1"
